@@ -13,6 +13,11 @@ from privacyintent.scanner import scan_site
 app = typer.Typer(help="PrivacyIntent CLI for website privacy auditing.")
 
 
+@app.callback()
+def main() -> None:
+    """Root command group for PrivacyIntent."""
+
+
 @app.command("scan")
 def scan(
     url: str,
