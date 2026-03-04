@@ -9,7 +9,7 @@ from urllib.parse import urljoin, urlparse
 
 from playwright.sync_api import BrowserContext, Response, sync_playwright
 
-from privacyintent.detectors import cookies, headers, third_party
+from privacyintent.detectors import cookies, headers, pii, third_party
 from privacyintent.models import CookieRecord, HeaderSnapshot, RequestRecord, ResponseRecord, ScanArtifacts, ScanReport
 
 
@@ -131,4 +131,5 @@ def scan_site(
     findings.extend(third_party.detect(artifacts))
     findings.extend(cookies.detect(artifacts))
     findings.extend(headers.detect(artifacts))
+    findings.extend(pii.detect(artifacts))
     return ScanReport(artifacts=artifacts, findings=findings)
