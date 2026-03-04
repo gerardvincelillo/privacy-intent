@@ -34,12 +34,12 @@ and reports privacy risks with severity, confidence, and remediation guidance.
 
 ## Installation
 
-## Prerequisites
+### Prerequisites
 
 - Python 3.11+
 - Chromium browser binary for Playwright
 
-## Install From Source
+### Install From Source
 
 ```bash
 git clone https://github.com/gerardvincelillo/privacyintent.git
