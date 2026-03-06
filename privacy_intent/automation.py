@@ -15,10 +15,19 @@ SCAN_PROFILES: dict[str, dict[str, int]] = {
 
 def normalize_target_url(url: str) -> str:
     """Normalize target URL by ensuring a scheme exists."""
-    parsed = urlparse(url)
+    candidate = url.strip()
+    if not candidate:
+        raise ValueError("Target URL cannot be empty.")
+    parsed = urlparse(candidate)
     if parsed.scheme:
-        return url
-    return f"https://{url}"
+        if not parsed.netloc:
+            raise ValueError("Target URL must include a host.")
+        return candidate
+    normalized = f"https://{candidate}"
+    normalized_parsed = urlparse(normalized)
+    if not normalized_parsed.netloc:
+        raise ValueError("Target URL must include a host.")
+    return normalized
 
 
 def resolve_scan_options(
@@ -28,7 +37,11 @@ def resolve_scan_options(
     depth: int | None,
 ) -> tuple[int, int, int]:
     """Resolve effective scan options using profile defaults and explicit overrides."""
-    selected = SCAN_PROFILES.get(profile, SCAN_PROFILES["standard"])
+    normalized_profile = profile.strip().lower()
+    if normalized_profile not in SCAN_PROFILES:
+        supported = ", ".join(sorted(SCAN_PROFILES))
+        raise ValueError(f"Unknown profile '{profile}'. Supported values: {supported}.")
+    selected = SCAN_PROFILES[normalized_profile]
     final_timeout = int(timeout) if timeout is not None else selected["timeout"]
     final_max_requests = int(max_requests) if max_requests is not None else selected["max_requests"]
     final_depth = int(depth) if depth is not None else selected["depth"]

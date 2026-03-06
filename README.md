@@ -101,6 +101,7 @@ privacyintent scan https://example.com \
 - `--depth <n>`: same-origin crawl depth (default: `0`)
 - `--profile <quick|standard|deep>`: apply tuned scan defaults
 - `--artifacts-dir <path>`: auto-generate scan artifacts (and CI gate JSON in CI mode)
+- `--json-only`: when auto-generating artifacts, skip Markdown output
 - `--quiet`: disable console summary output for scan automation
 
 ## Automation Examples

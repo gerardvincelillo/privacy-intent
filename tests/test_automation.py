@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from privacy_intent.automation import build_auto_report_paths, normalize_target_url, resolve_scan_options
 
 
@@ -16,8 +18,24 @@ def test_resolve_scan_options_profile_and_overrides() -> None:
     assert (timeout, max_requests, depth) == (10, 50, 0)
 
 
+def test_resolve_scan_options_rejects_unknown_profile() -> None:
+    with pytest.raises(ValueError):
+        resolve_scan_options("fastest", None, None, None)
+
+
+def test_normalize_target_url_rejects_empty_input() -> None:
+    with pytest.raises(ValueError):
+        normalize_target_url("   ")
+
+
 def test_build_auto_report_paths_uses_target_and_extensions() -> None:
     json_path, md_path = build_auto_report_paths("https://example.com", Path("reports"))
     assert json_path.suffix == ".json"
     assert md_path is not None and md_path.suffix == ".md"
     assert "example.com_" in json_path.name
+
+
+def test_build_auto_report_paths_can_skip_markdown() -> None:
+    json_path, md_path = build_auto_report_paths("https://example.com", Path("reports"), include_md=False)
+    assert json_path.suffix == ".json"
+    assert md_path is None

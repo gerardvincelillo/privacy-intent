@@ -58,22 +58,31 @@ def scan(
         "--artifacts-dir",
         help="Auto-generate JSON/Markdown reports in this directory when no --json/--md is provided.",
     ),
+    json_only: bool = typer.Option(
+        False,
+        "--json-only",
+        help="When auto-generating artifacts, only write JSON (skip Markdown).",
+    ),
     quiet: bool = typer.Option(False, "--quiet", help="Disable console scan summary output."),
 ) -> None:
     """Scan a URL for privacy risks."""
-    normalized_url = normalize_target_url(url)
-    effective_timeout, effective_max_requests, effective_depth = resolve_scan_options(
-        profile=profile,
-        timeout=timeout,
-        max_requests=max_requests,
-        depth=depth,
-    )
+    try:
+        normalized_url = normalize_target_url(url)
+        effective_timeout, effective_max_requests, effective_depth = resolve_scan_options(
+            profile=profile,
+            timeout=timeout,
+            max_requests=max_requests,
+            depth=depth,
+        )
+    except ValueError as exc:
+        typer.echo(f"Scan configuration error: {exc}")
+        raise typer.Exit(code=2) from exc
 
     json_path = json
     md_path = md
     sarif_path = sarif
     if artifacts_dir is not None and json_path is None and md_path is None:
-        json_path, md_path = build_auto_report_paths(normalized_url, artifacts_dir)
+        json_path, md_path = build_auto_report_paths(normalized_url, artifacts_dir, include_md=not json_only)
         sarif_path = artifacts_dir / f"{json_path.stem}.sarif.json"
 
     scan_site(
@@ -134,6 +143,11 @@ def ci_scan(
         "--artifacts-dir",
         help="Auto-generate scan and gate artifacts in this directory when paths are omitted.",
     ),
+    json_only: bool = typer.Option(
+        False,
+        "--json-only",
+        help="When auto-generating artifacts, only write JSON (skip Markdown).",
+    ),
     timeout: Optional[int] = typer.Option(None, "--timeout", min=1, help="Request timeout in seconds."),
     max_requests: Optional[int] = typer.Option(None, "--max-requests", min=1, help="Maximum number of requests to collect."),
     headless: bool = typer.Option(True, "--headless/--no-headless", help="Run browser headless."),
@@ -146,13 +160,17 @@ def ci_scan(
         typer.echo(f"CI gate policy error: Policy file not found: {policy}")
         raise typer.Exit(code=2)
 
-    normalized_url = normalize_target_url(url)
-    effective_timeout, effective_max_requests, effective_depth = resolve_scan_options(
-        profile=profile,
-        timeout=timeout,
-        max_requests=max_requests,
-        depth=depth,
-    )
+    try:
+        normalized_url = normalize_target_url(url)
+        effective_timeout, effective_max_requests, effective_depth = resolve_scan_options(
+            profile=profile,
+            timeout=timeout,
+            max_requests=max_requests,
+            depth=depth,
+        )
+    except ValueError as exc:
+        typer.echo(f"CI scan configuration error: {exc}")
+        raise typer.Exit(code=2) from exc
 
     json_path = json
     md_path = md
@@ -160,7 +178,7 @@ def ci_scan(
     gate_json_path = gate_json
     if artifacts_dir is not None:
         if json_path is None and md_path is None:
-            json_path, md_path = build_auto_report_paths(normalized_url, artifacts_dir)
+            json_path, md_path = build_auto_report_paths(normalized_url, artifacts_dir, include_md=not json_only)
             sarif_path = artifacts_dir / f"{json_path.stem}.sarif.json"
         if gate_json_path is None:
             gate_json_path = artifacts_dir / "ci_gate_result.json"

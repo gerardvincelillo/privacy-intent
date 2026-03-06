@@ -4,10 +4,8 @@ from __future__ import annotations
 
 from collections import deque
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from urllib.parse import urljoin, urlparse
-
-from playwright.sync_api import BrowserContext, Response, sync_playwright
 
 from privacy_intent.detectors import cookies, headers, pii, third_party, trackers
 from privacy_intent.models import CookieRecord, HeaderSnapshot, RequestRecord, ResponseRecord, ScanArtifacts, ScanReport
@@ -17,6 +15,9 @@ from privacy_intent.reporting.json_report import write_report as write_json_repo
 from privacy_intent.reporting.markdown_report import write_report as write_markdown_report
 from privacy_intent.reporting.sarif_report import write_report as write_sarif_report
 from privacy_intent.scoring.privacy_score import apply_privacy_score
+
+if TYPE_CHECKING:
+    from playwright.sync_api import BrowserContext, Response
 
 
 def _normalize_headers(headers: dict[str, str] | None) -> dict[str, str]:
@@ -51,7 +52,7 @@ def _safe_request_initiator(request) -> Optional[str]:
     return frame.url if frame else None
 
 
-def _attach_network_listeners(context: BrowserContext, artifacts: ScanArtifacts, max_requests: int) -> None:
+def _attach_network_listeners(context: "BrowserContext", artifacts: ScanArtifacts, max_requests: int) -> None:
     def on_request(request) -> None:
         if len(artifacts.requests) >= max_requests:
             return
@@ -66,7 +67,7 @@ def _attach_network_listeners(context: BrowserContext, artifacts: ScanArtifacts,
             )
         )
 
-    def on_response(response: Response) -> None:
+    def on_response(response: "Response") -> None:
         if len(artifacts.responses) >= max_requests:
             return
         headers = _normalize_headers(response.headers)
@@ -97,6 +98,8 @@ def scan_site(
     print_console_output: bool = True,
 ) -> ScanReport:
     """Capture network artifacts from a target URL with optional shallow crawl."""
+    from playwright.sync_api import sync_playwright
+
     artifacts = ScanArtifacts(root_url=url)
 
     with sync_playwright() as p:
