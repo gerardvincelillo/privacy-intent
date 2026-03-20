@@ -4,6 +4,8 @@ PrivacyIntent is an open-source Python CLI for privacy-focused web reconnaissanc
 It scans a target URL using a real browser, collects network and cookie evidence,
 and reports privacy risks with severity, confidence, and remediation guidance.
 
+![PrivacyIntent overview](docs/screenshots/privacyintent-overview.svg)
+
 ## Status
 
 - Repository: public (`privacyintent`)
